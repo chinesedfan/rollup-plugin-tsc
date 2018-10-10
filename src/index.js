@@ -5,7 +5,7 @@ import {createService} from "./service";
 
 
 
-export default function tsc(tsconfig) {
+export default function tsc(tsconfig, extraOptions = {}) {
 	tsconfig = tsconfig || {};
 	tsconfig.compilerOptions = tsconfig.compilerOptions || {};
 
@@ -50,6 +50,20 @@ export default function tsc(tsconfig) {
 
 		transform(code, id) {
 			if(!service.filter(id)) {
+				if (extraOptions.shouldTransformDirectly && extraOptions.shouldTransformDirectly(id)) {
+					const {outputText, sourceMapText, errors, warnings} = service.compile(code, id);
+					if(warnings && warnings.length) {
+						warnings.forEach(this.warn);
+					}
+					if(errors && errors.length) {
+						errors.forEach(err => console.error(`ERROR: ${err}`));
+						this.error(`typescript compilation failed`);
+					}
+					return {
+						code: outputText,
+						map: sourceMapText ? JSON.parse(sourceMapText) : {mappings: ''}
+					};
+				}
 				return null;
 			}
 

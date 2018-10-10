@@ -6,6 +6,7 @@ import {
 	parseJsonConfigFileContent,
 	getDefaultLibFilePath,
 	resolveModuleName,
+	transpileModule,
 	createDocumentRegistry,
 	createLanguageService,
 	flattenDiagnosticMessageText,
@@ -43,6 +44,16 @@ export function createService(tsconfig) {
 	const svc = createLanguageService(host, reg);
 	svc.host = host;
 
+
+	svc.compile = function(source, filename) {
+		const output = transpileModule(source, {
+			compilerOptions: options,
+			filename,
+			reportDiagnostics: true
+		});
+		setWarningsAndErrors(output, output.diagnostics);
+		return output;
+	}
 	svc.emit = function(filename) {
 		const output = svc.getEmitOutput(filename);
 		let diag = svc.getSyntacticDiagnostics(filename);
@@ -52,7 +63,11 @@ export function createService(tsconfig) {
 				diag = svc.getSemanticDiagnostics(filename);
 			}
 		}
+		setWarningsAndErrors(output, filename);
+		return output;
+	}
 
+	function setWarningsAndErrors(output, diag) {
 		output.errors = [];
 		output.warnings = [];
 		diag.forEach(d => {

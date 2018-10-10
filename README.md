@@ -18,7 +18,9 @@ export default {
 	plugins: [
 		tsc({
 			// put your tsconfig here
-		})
+		}, /* optional */ {
+            // shouldTransformDirectly(fileName), if returns true, the file will be compiled directly
+        })
 	]
 };
 ```
